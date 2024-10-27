@@ -3,10 +3,12 @@ from torch import nn
 from torch.optim import Adam
 from torchvision.models import vit_b_16
 from ignite.metrics import Accuracy, Loss
-from ignite.engine import Events, create_supervised_trainer
+from ignite.engine import Events, create_supervised_trainer, create_supervised_evaluator
 from ignite.engine import Engine
 from ignite.contrib.handlers import ProgressBar
 from torch.utils.data import DataLoader
+from ignite.metrics import RunningAverage
+from ignite.utils import setup_logger
 from tqdm import tqdm
 from dataset import MyDataset
 from attn import CrossAttention
@@ -42,11 +44,16 @@ class VitEncoder(nn.Module):
         x = torch.cat([batch_class_token, x], dim=1)
 
         x = self.vit.encoder(x)
-        print(x.shape)
         x = self.cross_attn(inputs_kv=x, inputs_q=self.latents.repeat(n, 1, 1))
 
         return x
     
+def output_transform(output):
+    y_pred, y = output
+    y_pred = y_pred.view(-1, y_pred.size(-1))
+    y = y.contiguous().view(-1)
+
+    return y_pred, y
 
 def main():
     batch_size = 2
@@ -58,28 +65,26 @@ def main():
     model = VitEncoder(vit)
 
     train_dataset = MyDataset()
+    val_dataset = MyDataset()
     train_loader = DataLoader(train_dataset, shuffle=True, batch_size=batch_size)
-    # val_loader = DataLoader(val_dataset, shuffle=False, batch_size=batch_size)
+    val_loader = DataLoader(val_dataset, shuffle=False, batch_size=batch_size)
     
     optimizer = Adam(model.parameters(), lr=lr)
     criterion = nn.CrossEntropyLoss()
-
-    val_metrics = {"accuracy": Accuracy(), "less": Loss(criterion)}
-    # trainer = create_supervised_trainer(model, optimizer, criterion, device=device)
 
     def train_step(engine, batch):
         model.train()
         
         x, y = batch
         x = x.to(device)
-        y = y.to(device)    
+        y = y.to(device)
 
-        y_hat = model(x)
+        y_pred = model(x)
 
-        y_hat = y_hat.view(-1, y_hat.size(-1))
+        y_pred = y_pred.view(-1, y_pred.size(-1))
         y = y.contiguous().view(-1)
 
-        loss = criterion(y_hat, y)
+        loss = criterion(y_pred, y)
 
         optimizer.zero_grad()
         loss.backward()
@@ -87,23 +92,55 @@ def main():
 
         return loss.item()
 
-    trainer = Engine(train_step)
+    def val_step(engine, batch):
+        model.eval()
+        optimizer.zero_grad()
 
-    pbar = ProgressBar()
-    pbar.attach(trainer, metric_names=["loss"])
-    # @trainer.on(Events.ITERATION_COMPLETED(every=1))
-    # def log_training_loss(engine):
-    #     pbar.desc = f"ITERATION - loss: {engine.state.output:.2f}"
-    #     pbar.update(log_interval)
-    
+        x, y = batch
+        x = x.to(device)
+        y = y.to(device)
+
+        y_pred = model(x)
+
+        y_pred = y_pred.view(-1, y_pred.size(-1))
+        y = y.contiguous().view(-1)
+
+        # loss = criterion(y_pred, y)
+
+        return y_pred, y
+
+    trainer = Engine(train_step)
+    trainer.logger = setup_logger('trainer')
+
+    RunningAverage(output_transform=lambda x: x).attach(trainer, 'loss')
+    pbar_train = ProgressBar()
+    pbar_train.attach(trainer, metric_names=['loss'])
+
+    evaluator = Engine(val_step)
+    Loss(criterion, output_transform=output_transform).attach(evaluator, 'loss')
+    Accuracy(output_transform=output_transform).attach(evaluator, 'accuracy')
+
+    evaluator.logger = setup_logger('evaluator')
+
+    @trainer.on(Events.EPOCH_COMPLETED)
+    def log_validation_results(engine):
+        evaluator.run(val_loader)
+        metrics = evaluator.state.metrics
+        avg_accuracy = metrics['accuracy']
+        loss = metrics['loss']
+        tqdm.write(
+            f'Validation Results - Epoch: {engine.state.epoch} Avg accuracy: {avg_accuracy:.2f} Avg loss: {loss:.2f}'
+        )
+
     trainer.run(train_loader, max_epochs=epochs)
+
+
+
+if __name__ == '__main__':
+    main()
 
     # x = torch.randn(1, 3, 224, 224)
     # y = model(x)
     # print(count_parameters(model))
     # print(y.shape)
     # print(model)
-
-
-if __name__ == '__main__':
-    main()

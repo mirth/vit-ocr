@@ -9,11 +9,11 @@ class MyDataset(Dataset):
         self.tokenizer.add_special_tokens({'pad_token': '[PAD]'})
 
     def __len__(self):
-        return 100#len(self.data)
+        return 10#len(self.data)
 
     def __getitem__(self, idx):
-        # return self.data[idx]
-        x = torch.randn(3, 224, 224)
+
+        x = torch.ones(3, 224, 224)
         y = "hello eirugre"
         max_length = 32
         y = self.tokenizer(
@@ -24,7 +24,7 @@ class MyDataset(Dataset):
             truncation=True,
         )
         y = y["input_ids"]
-        print('YYY:', y)
+
         return x, y
     
 

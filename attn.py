@@ -46,7 +46,6 @@ class MultiHeadAttention(nn.Module):
         self.k = nn.Linear(kv_dim, qk_out_dim)
         self.q = nn.Linear(q_dim, qk_out_dim)
         self.v = nn.Linear(kv_dim, v_out_dim)
-        print('v_out_dim:', v_out_dim, 'output_dim:', output_dim)
         self.projection = nn.Linear(v_out_dim, output_dim)
         self.dropout = nn.Dropout(dropout)
         self.scale = self.qk_head_dim ** -0.5

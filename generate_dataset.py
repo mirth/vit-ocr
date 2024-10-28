@@ -22,7 +22,8 @@ def random_string(length: int):
     return ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(length))
 
 def main():
-    font_filepath = "/Library/Fonts/Arial Unicode.ttf"
+    # font_filepath = "/Library/Fonts/Arial Unicode.ttf"
+    font_filepath = '/usr/share/fonts/truetype/ubuntu/Ubuntu-B.ttf'
 
     # text = "Hello, World 12!"
     font_size = 32

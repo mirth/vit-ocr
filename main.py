@@ -1,3 +1,5 @@
+import torch
+from torch import nn
 from torch.optim import Adam
 from torchvision.models import vit_b_16
 from torch.utils.data import DataLoader
@@ -26,13 +28,14 @@ def output_transform(output):
 
 
 def main():
-    batch_size = 2
+    batch_size = 16
     lr = 1e-4
     epochs = 10
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    device = 'cuda'# if torch.cuda.is_available() else 'cpu'
 
     vit = vit_b_16(weights='IMAGENET1K_V1')
     model = VitEncoder(vit)
+    model.cuda()
 
     df_train, df_test = load_df()
     train_dataset = MyDataset(df_train)

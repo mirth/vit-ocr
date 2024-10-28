@@ -2,16 +2,18 @@ import torch
 from torch import nn
 from torch.optim import Adam
 from torchvision.models import vit_b_16
+from torch.utils.data import DataLoader
 from ignite.metrics import Accuracy, Loss
 from ignite.engine import Events, create_supervised_trainer, create_supervised_evaluator
 from ignite.engine import Engine
 from ignite.contrib.handlers import ProgressBar
-from torch.utils.data import DataLoader
 from ignite.metrics import RunningAverage
 from ignite.utils import setup_logger
+from ignite.handlers import Checkpoint
 from tqdm import tqdm
 from dataset import MyDataset
 from attn import CrossAttention
+
 
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -142,6 +144,13 @@ def main():
         tqdm.write(
             f'Validation Results - Epoch: {engine.state.epoch} Avg accuracy: {avg_accuracy:.2f} Avg loss: {loss:.2f}'
         )
+
+    to_save = {'model': model}
+    gst = lambda *_: trainer.state.epoch
+    handler = Checkpoint(
+        to_save, './checkpoints', n_saved=3, global_step_transform=gst
+    )
+    trainer.add_event_handler(Events.EPOCH_COMPLETED, handler)
 
     trainer.run(train_loader, max_epochs=epochs)
 

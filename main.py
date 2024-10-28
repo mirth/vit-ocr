@@ -55,6 +55,16 @@ def output_transform(output):
 
     return y_pred, y
 
+def load_df():
+    from sklearn.model_selection import train_test_split
+    import pandas as pd
+    
+    df = pd.read_csv("dataset0/data.csv")
+    df_train, df_test = train_test_split(df, test_size=0.2, random_state=42)
+
+    return df_train, df_test
+
+
 def main():
     batch_size = 2
     lr = 1e-4
@@ -64,8 +74,9 @@ def main():
     vit = vit_b_16(weights='IMAGENET1K_V1')
     model = VitEncoder(vit)
 
-    train_dataset = MyDataset()
-    val_dataset = MyDataset()
+    df_train, df_test = load_df()
+    train_dataset = MyDataset(df_train)
+    val_dataset = MyDataset(df_test)
     train_loader = DataLoader(train_dataset, shuffle=True, batch_size=batch_size)
     val_loader = DataLoader(val_dataset, shuffle=False, batch_size=batch_size)
     

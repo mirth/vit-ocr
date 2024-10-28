@@ -37,6 +37,14 @@ class MyDataset(Dataset):
 
         return x, y
     
+def load_df(nrows=None):
+    from sklearn.model_selection import train_test_split
+    import pandas as pd
+
+    df = pd.read_csv("dataset0/data.csv", nrows=nrows)
+    df_train, df_test = train_test_split(df, test_size=0.2, random_state=42)
+
+    return df_train, df_test
 
 if __name__ == '__main__':
     import pandas as pd

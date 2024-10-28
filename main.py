@@ -1,5 +1,3 @@
-import torch
-from torch import nn
 from torch.optim import Adam
 from torchvision.models import vit_b_16
 from torch.utils.data import DataLoader
@@ -11,60 +9,20 @@ from ignite.metrics import RunningAverage
 from ignite.utils import setup_logger
 from ignite.handlers import Checkpoint
 from tqdm import tqdm
-from dataset import MyDataset
-from attn import CrossAttention
+from dataset import MyDataset, load_df
+from vit import VitEncoder
 
 
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
-VOCAB_SIZE = 50257 + 1
-# def count_parameters(model):
-#     for name, p in model.named_parameters():
-#         print(name, p.numel())
 
-class VitEncoder(nn.Module):
-    def __init__(self, vit):
-        super().__init__()
-
-        vit.heads = nn.Identity()
-        self.vit = vit
-        self.cross_attn = CrossAttention(
-            kv_dim=768,
-            q_dim=VOCAB_SIZE,
-            qk_out_dim=768,
-            v_out_dim=768,
-            num_heads=768 // 128,
-        )
-        self.latents = nn.Parameter(torch.randn(32, VOCAB_SIZE))
-
-    def forward(self, x):
-        n, c, h, w = x.shape
-
-        x = self.vit._process_input(x)
-        batch_class_token = self.vit.class_token.expand(n, -1, -1)
-        x = torch.cat([batch_class_token, x], dim=1)
-
-        x = self.vit.encoder(x)
-        x = self.cross_attn(inputs_kv=x, inputs_q=self.latents.repeat(n, 1, 1))
-
-        return x
-    
 def output_transform(output):
     y_pred, y = output
     y_pred = y_pred.view(-1, y_pred.size(-1))
     y = y.contiguous().view(-1)
 
     return y_pred, y
-
-def load_df():
-    from sklearn.model_selection import train_test_split
-    import pandas as pd
-    
-    df = pd.read_csv("dataset0/data.csv")
-    df_train, df_test = train_test_split(df, test_size=0.2, random_state=42)
-
-    return df_train, df_test
 
 
 def main():

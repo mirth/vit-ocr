@@ -6,9 +6,10 @@ from PIL import Image
 
 
 class MyDataset(Dataset):
-    def __init__(self, df):
+    def __init__(self, dataset_rootdir, df):
         self.data = df.values
-        self.max_length = 16
+        self.dataset_rootdir = dataset_rootdir
+        self.max_length = 10
 
         self.tokenizer = AutoTokenizer.from_pretrained("gpt2", use_fast=True)
         self.tokenizer.add_special_tokens({'pad_token': '[PAD]'})
@@ -23,7 +24,7 @@ class MyDataset(Dataset):
     def __getitem__(self, idx):
         y, x = self.data[idx]
 
-        x = Image.open('dataset0/' + x)
+        x = Image.open(f'{self.dataset_rootdir}/' + x)
         x = self.transform(x)
 
         y = self.tokenizer(
@@ -37,11 +38,11 @@ class MyDataset(Dataset):
 
         return x, y
     
-def load_df(nrows=None):
+def load_df(dataset_rootdir, nrows=None):
     from sklearn.model_selection import train_test_split
     import pandas as pd
 
-    df = pd.read_csv("dataset0/data.csv", nrows=nrows)
+    df = pd.read_csv(f"{dataset_rootdir}/data.csv", nrows=nrows)
     df_train, df_test = train_test_split(df, test_size=0.2, random_state=42)
 
     return df_train, df_test

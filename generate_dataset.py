@@ -21,7 +21,11 @@ def random_string(length: int):
 
     return ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(length))
 
-def main():
+def main(
+    dataset_rootdir='dataset2',
+    string_length=10,
+    number_of_samples=100000
+    ):
     # font_filepath = "/Library/Fonts/Arial Unicode.ttf"
     font_filepath = '/usr/share/fonts/truetype/ubuntu/Ubuntu-B.ttf'
 
@@ -32,15 +36,15 @@ def main():
 
 
     df = [{
-        'text': random_string(10),
+        'text': random_string(string_length),
         'image': f'imgs/{i}.png'
-    } for i in range(100000)]
+    } for i in range(number_of_samples)]
 
-    pd.DataFrame(df).to_csv("dataset0/data.csv", index=False)
+    pd.DataFrame(df).to_csv(f"{dataset_rootdir}/data.csv", index=False)
 
     for text in tqdm(df):
         img = text_to_image(text['text'], font, color)
-        img.save('dataset0/' + text['image'])
+        img.save(f'{dataset_rootdir}/' + text['image'])
 
 if __name__ == '__main__':
     main()

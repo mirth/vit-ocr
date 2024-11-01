@@ -30,7 +30,7 @@ def output_transform(output):
     return y_pred, y
 
 
-def main():
+def main(dataset_rootdir='dataset2'):
     batch_size = 6
     lr = 1e-4
     epochs = 100
@@ -38,11 +38,12 @@ def main():
 
     vit = vit_b_16(weights='IMAGENET1K_V1')
     model = VitEncoder(vit)
+    print(model)
     model.cuda()
 
-    df_train, df_test = load_df(nrows=None)
-    train_dataset = MyDataset(df_train)
-    val_dataset = MyDataset(df_test)
+    df_train, df_test = load_df(dataset_rootdir=dataset_rootdir, nrows=None)
+    train_dataset = MyDataset(dataset_rootdir, df_train)
+    val_dataset = MyDataset(dataset_rootdir, df_test)
     train_loader = DataLoader(train_dataset, shuffle=True, batch_size=batch_size)
     val_loader = DataLoader(val_dataset, shuffle=False, batch_size=batch_size)
     

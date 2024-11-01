@@ -1,7 +1,9 @@
+import math
 import torch
 from torch import nn
 from torch.optim import Adam
 from torchvision.models import vit_b_16
+from torch.optim.lr_scheduler import CosineAnnealingLR
 from torch.utils.data import DataLoader
 from ignite.metrics import Accuracy, Loss
 from ignite.engine import Events, create_supervised_trainer, create_supervised_evaluator
@@ -10,6 +12,7 @@ from ignite.contrib.handlers import ProgressBar
 from ignite.metrics import RunningAverage
 from ignite.utils import setup_logger
 from ignite.handlers import Checkpoint
+from ignite.handlers.param_scheduler import LRScheduler
 from tqdm import tqdm
 from dataset import MyDataset, load_df
 from vit import VitEncoder
@@ -28,16 +31,16 @@ def output_transform(output):
 
 
 def main():
-    batch_size = 16
+    batch_size = 6
     lr = 1e-4
-    epochs = 10
+    epochs = 100
     device = 'cuda'# if torch.cuda.is_available() else 'cpu'
 
     vit = vit_b_16(weights='IMAGENET1K_V1')
     model = VitEncoder(vit)
     model.cuda()
 
-    df_train, df_test = load_df()
+    df_train, df_test = load_df(nrows=None)
     train_dataset = MyDataset(df_train)
     val_dataset = MyDataset(df_test)
     train_loader = DataLoader(train_dataset, shuffle=True, batch_size=batch_size)
@@ -45,6 +48,11 @@ def main():
     
     optimizer = Adam(model.parameters(), lr=lr)
     criterion = nn.CrossEntropyLoss()
+
+    T_max = math.ceil(len(train_dataset) / batch_size)
+
+    torch_lr_scheduler = CosineAnnealingLR(optimizer, T_max=T_max, eta_min=0.00001)
+    lr_scheduler = LRScheduler(torch_lr_scheduler)    
 
     def train_step(engine, batch):
         model.train()
@@ -85,6 +93,11 @@ def main():
 
     trainer = Engine(train_step)
     trainer.logger = setup_logger('trainer')
+    trainer.add_event_handler(Events.ITERATION_STARTED, lr_scheduler)
+
+    # @trainer.on(Events.ITERATION_COMPLETED)
+    # def print_lr():
+    #     print(optimizer.param_groups[0]["lr"])
 
     RunningAverage(output_transform=lambda x: x).attach(trainer, 'loss')
     pbar_train = ProgressBar()

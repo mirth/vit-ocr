@@ -20,7 +20,7 @@ class VitEncoder(nn.Module):
             v_out_dim=768,
             num_heads=768 // 128,
         )
-        self.latents = nn.Parameter(torch.randn(32, VOCAB_SIZE))
+        self.latents = nn.Parameter(torch.randn(16, VOCAB_SIZE))
 
     def forward(self, x):
         n, c, h, w = x.shape

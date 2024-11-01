@@ -7,7 +7,7 @@ from dataset import MyDataset, load_df
 def main():
     vit = vit_b_16(weights='IMAGENET1K_V1')
     model = VitEncoder(vit)    
-    pt = torch.load('checkpoints/model_1.pt')
+    pt = torch.load('checkpoints/model_26.pt')
 
     model.load_state_dict(pt)
     model.eval()
@@ -15,7 +15,7 @@ def main():
     _df_train, df_test = load_df(nrows=100)
     val_dataset = MyDataset(df_test)
 
-    x, y = val_dataset[0]
+    x, y = val_dataset[3]
 
     y_pred = model(x.unsqueeze(0))
     y_pred = y_pred.argmax(-1)

@@ -8,7 +8,7 @@ from PIL import Image
 class MyDataset(Dataset):
     def __init__(self, df):
         self.data = df.values
-        self.max_length = 32
+        self.max_length = 16
 
         self.tokenizer = AutoTokenizer.from_pretrained("gpt2", use_fast=True)
         self.tokenizer.add_special_tokens({'pad_token': '[PAD]'})

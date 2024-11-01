@@ -117,6 +117,31 @@ class FeedForward(nn.Module):
     def forward(self, x: torch.Tensor):
         return self.mlp(x)
 
+class FeedForwardBottle(nn.Module):
+    """Transformer Feed-Forward network."""
+    def __init__(
+        self,
+        dim: int,
+        widening_factor: int = 4,
+        dropout: float = 0.0
+    ):
+        """Constructor.
+
+        Args:
+            dim: Dimension of input tensor.
+            widening_factor: Widening factor. Defaults to 4.
+            dropout: Dropout probability. Defaults to 0.
+        """
+        super().__init__()
+        self.mlp = nn.Sequential(
+            nn.Linear(dim, 768),
+            nn.GELU(),
+            nn.Linear(768, dim),
+            nn.Dropout(dropout)
+        )
+
+    def forward(self, x: torch.Tensor):
+        return self.mlp(x)
 
 class CrossAttention(nn.Module):
     """Cross-attention module."""
@@ -165,7 +190,7 @@ class CrossAttention(nn.Module):
             dropout=attention_dropout
         )
         self.dropout = nn.Dropout(dropout)
-        # self.mlp = FeedForward(q_dim, widening_factor, dropout)
+        self.mlp = FeedForwardBottle(q_dim, widening_factor, dropout)
 
     def forward(
         self,
@@ -190,6 +215,6 @@ class CrossAttention(nn.Module):
             x = inputs_q + attention
         else:
             x = attention
-        # x = x + self.mlp(self.qkv_layer_norm(x))
+        x = x + self.mlp(self.qkv_layer_norm(x))
         return x
 

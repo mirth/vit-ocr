@@ -5,17 +5,21 @@ from dataset import MyDataset, load_df
 
 
 def main(dataset_rootdir='dataset2'):
+    max_lenth = 10
     vit = vit_b_16(weights='IMAGENET1K_V1')
-    model = VitEncoder(vit)    
-    pt = torch.load('checkpoints/model_1.pt')
+    model = VitEncoder(vit, max_lenth)    
+    model.cuda()
+
+    pt = torch.load('checkpoints/model_8.pt')
 
     model.load_state_dict(pt)
     model.eval()
 
     _df_train, df_test = load_df(dataset_rootdir, nrows=100)
-    val_dataset = MyDataset(dataset_rootdir, df_test)
+    val_dataset = MyDataset(dataset_rootdir, df_test, max_lenth)
 
-    x, y = val_dataset[0]
+    x, y = val_dataset[1]
+    x = x.cuda()
 
     y_pred = model(x.unsqueeze(0))
     y_pred = y_pred.argmax(-1)

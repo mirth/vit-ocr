@@ -6,10 +6,10 @@ from PIL import Image
 
 
 class MyDataset(Dataset):
-    def __init__(self, dataset_rootdir, df):
+    def __init__(self, dataset_rootdir, df, max_length):
         self.data = df.values
         self.dataset_rootdir = dataset_rootdir
-        self.max_length = 10
+        self.max_length = max_length
 
         self.tokenizer = AutoTokenizer.from_pretrained("gpt2", use_fast=True)
         self.tokenizer.add_special_tokens({'pad_token': '[PAD]'})

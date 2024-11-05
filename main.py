@@ -35,15 +35,16 @@ def main(dataset_rootdir='dataset2'):
     lr = 1e-4
     epochs = 100
     device = 'cuda'# if torch.cuda.is_available() else 'cpu'
+    max_length = 10
 
     vit = vit_b_16(weights='IMAGENET1K_V1')
-    model = VitEncoder(vit)
+    model = VitEncoder(vit, max_length)
     print(model)
     model.cuda()
 
     df_train, df_test = load_df(dataset_rootdir=dataset_rootdir, nrows=None)
-    train_dataset = MyDataset(dataset_rootdir, df_train)
-    val_dataset = MyDataset(dataset_rootdir, df_test)
+    train_dataset = MyDataset(dataset_rootdir, df_train, max_length)
+    val_dataset = MyDataset(dataset_rootdir, df_test, max_length)
     train_loader = DataLoader(train_dataset, shuffle=True, batch_size=batch_size)
     val_loader = DataLoader(val_dataset, shuffle=False, batch_size=batch_size)
     

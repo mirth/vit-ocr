@@ -22,9 +22,9 @@ def random_string(length: int):
     return ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(length))
 
 def main(
-    dataset_rootdir='dataset2',
-    string_length=10,
-    number_of_samples=100000
+    dataset_rootdir='dataset4',
+    string_length=196,
+    number_of_samples=10000
     ):
     # font_filepath = "/Library/Fonts/Arial Unicode.ttf"
     font_filepath = '/usr/share/fonts/truetype/ubuntu/Ubuntu-B.ttf'

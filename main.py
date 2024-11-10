@@ -30,7 +30,7 @@ def output_transform(output):
     return y_pred, y
 
 
-def main(dataset_rootdir='dataset2'):
+def main(dataset_rootdir='datasets/dataset6'):
     batch_size = 6
     lr = 1e-4
     epochs = 100
@@ -39,7 +39,9 @@ def main(dataset_rootdir='dataset2'):
 
     vit = vit_b_16(weights='IMAGENET1K_V1')
     model = VitEncoder(vit, max_length)
-    print(model)
+
+    # pt = torch.load('archive/model_9_dataset7_acc_0.9.pt')
+    # model.load_state_dict(pt)
     model.cuda()
 
     df_train, df_test = load_df(dataset_rootdir=dataset_rootdir, nrows=None)
@@ -97,9 +99,13 @@ def main(dataset_rootdir='dataset2'):
     trainer.logger = setup_logger('trainer')
     trainer.add_event_handler(Events.ITERATION_STARTED, lr_scheduler)
 
-    # @trainer.on(Events.ITERATION_COMPLETED)
-    # def print_lr():
-    #     print(optimizer.param_groups[0]["lr"])
+    @trainer.on(Events.EPOCH_STARTED)
+    def print_lr():
+        print('EPOCH_STARTED: ', optimizer.param_groups[0]["lr"])
+
+    @trainer.on(Events.EPOCH_COMPLETED)
+    def print_lr():
+        print('EPOCH_COMPLETED: ', optimizer.param_groups[0]["lr"])
 
     RunningAverage(output_transform=lambda x: x).attach(trainer, 'loss')
     pbar_train = ProgressBar()
@@ -130,7 +136,11 @@ def main(dataset_rootdir='dataset2'):
 
     trainer.run(train_loader, max_epochs=epochs)
 
-
+    # if evaluation:
+    #     pt = torch.load('checkpoints/model_21.pt')
+    #     model.load_state_dict(pt)
+    #     model.eval()
+    #     log_validation_results(evaluator)
 
 if __name__ == '__main__':
     main()

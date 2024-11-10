@@ -1,8 +1,5 @@
 __pycache__/
-dataset0
-dataset1
-dataset2
-dataset3
-dataset4
+datasets
 checkpoints*
 notebooks
+archive

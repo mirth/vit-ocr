@@ -3,19 +3,27 @@ from torchvision.models import vit_b_16
 from vit import VitEncoder
 from dataset import MyDataset, load_df
 
+# def evaluation():
+#     evaluator.run(val_loader)
+#     metrics = evaluator.state.metrics
+#     avg_accuracy = metrics['accuracy']
+#     loss = metrics['loss']
+#     tqdm.write(
+#         f'Validation Results - Epoch: {engine.state.epoch} Avg accuracy: {avg_accuracy:.2f} Avg loss: {loss:.2f}'
+#     )    
 
-def main(dataset_rootdir='dataset2'):
+def eval_sample(dataset_rootdir='datasets/dataset6'):
     max_lenth = 10
     vit = vit_b_16(weights='IMAGENET1K_V1')
     model = VitEncoder(vit, max_lenth)    
     model.cuda()
 
-    pt = torch.load('checkpoints/model_8.pt')
+    pt = torch.load('checkpoints/model_22.pt')
 
     model.load_state_dict(pt)
     model.eval()
 
-    _df_train, df_test = load_df(dataset_rootdir, nrows=100)
+    _df_train, df_test = load_df(dataset_rootdir, nrows=None)
     val_dataset = MyDataset(dataset_rootdir, df_test, max_lenth)
 
     x, y = val_dataset[1]
@@ -32,4 +40,4 @@ def main(dataset_rootdir='dataset2'):
 
 
 if __name__ == '__main__':
-    main()
+    eval_sample()

@@ -30,8 +30,8 @@ def output_transform(output):
     return y_pred, y
 
 
-def main(dataset_rootdir='datasets/dataset6'):
-    batch_size = 6
+def main(dataset_rootdir='datasets/dataset7'):
+    batch_size = 12
     lr = 1e-4
     epochs = 100
     device = 'cuda'# if torch.cuda.is_available() else 'cpu'

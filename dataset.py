@@ -1,8 +1,18 @@
 import torch
+import numpy as np
 from transformers import AutoTokenizer
 from torch.utils.data import Dataset
 from torchvision import transforms
 from PIL import Image
+import string
+
+chars = list(string.ascii_lowercase + string.digits)
+char_by_id = {i:c for i, c in enumerate(chars)}
+id_by_char = {c:i for i, c in enumerate(chars)}
+def encode(s):
+    return [id_by_char[c] for c in s]
+def decode(ids):
+    return ''.join([char_by_id[id] for id in ids])
 
 
 class MyDataset(Dataset):
@@ -27,14 +37,15 @@ class MyDataset(Dataset):
         x = Image.open(f'{self.dataset_rootdir}/' + x)
         x = self.transform(x)
 
-        y = self.tokenizer(
-            y,
-            return_tensors="pt",
-            max_length=self.max_length,
-            padding="max_length",
-            truncation=True,
-        )
-        y = y["input_ids"]
+        y = torch.from_numpy(np.array(encode(y)))
+        # y = self.tokenizer(
+        #     y,
+        #     return_tensors="pt",
+        #     max_length=self.max_length,
+        #     padding="max_length",
+        #     truncation=True,
+        # )
+        # y = y["input_ids"]
 
         return x, y
     

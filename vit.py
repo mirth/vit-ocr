@@ -3,8 +3,10 @@ from torch import nn
 from einops import rearrange
 from attn import CrossAttention
 
+from dataset import chars
 
-VOCAB_SIZE = 50257 + 1
+VOCAB_SIZE = len(chars)
+# VOCAB_SIZE = 50257 + 1
 # def count_parameters(model):
 #     for name, p in model.named_parameters():
 #         print(name, p.numel())

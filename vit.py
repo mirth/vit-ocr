@@ -3,7 +3,7 @@ from torch import nn
 from einops import rearrange
 from attn import CrossAttention
 
-from dataset import chars
+from tokenizer import chars
 
 VOCAB_SIZE = len(chars)
 # VOCAB_SIZE = 50257 + 1
@@ -36,9 +36,6 @@ class VitEncoder(nn.Module):
 
         x = self.vit.encoder(x)
 
-        pos_emb = self.pos_emb(torch.arange(197, device='cuda'))
-        pos_emb = rearrange(pos_emb, 'n d -> () n d')
-        x = x + pos_emb
         x = self.cross_attn(inputs_kv=x, inputs_q=self.latents.repeat(n, 1, 1))
 
 

@@ -4,16 +4,7 @@ from transformers import AutoTokenizer
 from torch.utils.data import Dataset
 from torchvision import transforms
 from PIL import Image
-import string
-
-chars = list(string.ascii_lowercase + string.digits)
-char_by_id = {i:c for i, c in enumerate(chars)}
-id_by_char = {c:i for i, c in enumerate(chars)}
-def encode(s):
-    return [id_by_char[c] for c in s]
-def decode(ids):
-    return ''.join([char_by_id[id] for id in ids])
-
+import tokenizer
 
 class MyDataset(Dataset):
     def __init__(self, dataset_rootdir, df, max_length):
@@ -21,8 +12,6 @@ class MyDataset(Dataset):
         self.dataset_rootdir = dataset_rootdir
         self.max_length = max_length
 
-        self.tokenizer = AutoTokenizer.from_pretrained("gpt2", use_fast=True)
-        self.tokenizer.add_special_tokens({'pad_token': '[PAD]'})
         self.transform = transforms.Compose([
             transforms.Resize((224, 224)),
             transforms.ToTensor(),
@@ -37,15 +26,7 @@ class MyDataset(Dataset):
         x = Image.open(f'{self.dataset_rootdir}/' + x)
         x = self.transform(x)
 
-        y = torch.from_numpy(np.array(encode(y)))
-        # y = self.tokenizer(
-        #     y,
-        #     return_tensors="pt",
-        #     max_length=self.max_length,
-        #     padding="max_length",
-        #     truncation=True,
-        # )
-        # y = y["input_ids"]
+        y = torch.from_numpy(np.array(tokenizer.encode(y)))
 
         return x, y
     

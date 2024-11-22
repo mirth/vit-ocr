@@ -15,6 +15,7 @@ from ignite.handlers import Checkpoint
 from ignite.handlers.param_scheduler import LRScheduler
 from tqdm import tqdm
 from dataset import MyDataset, load_df
+from dataset_iiit5k import DatasetIIIT5K
 from vit import VitEncoder
 
 
@@ -29,13 +30,35 @@ def output_transform(output):
 
     return y_pred, y
 
+def load_mydataset(dataset_rootdir, *, max_length, batch_size):
+    df_train, df_test = load_df(dataset_rootdir=dataset_rootdir, nrows=None)
+    train_dataset = MyDataset(dataset_rootdir, df_train, max_length)
+    val_dataset = MyDataset(dataset_rootdir, df_test, max_length)
+    train_loader = DataLoader(train_dataset, shuffle=True, batch_size=batch_size)
+    val_loader = DataLoader(val_dataset, shuffle=False, batch_size=batch_size)
 
-def main(dataset_rootdir='datasets/dataset7'):
+    return train_loader, val_loader
+
+def load_IIIT5K_dataset(dataset_rootdir, *, max_length, batch_size):
+    import pandas as pd
+    df_train = pd.read_csv('datasets/IIIT5K-Word_V3.0/IIIT5K-Word_V3.0_IIIT5K_traindata.csv')
+    df_test = pd.read_csv('datasets/IIIT5K-Word_V3.0/IIIT5K-Word_V3.0_IIIT5K_testdata.csv')
+    train_dataset = DatasetIIIT5K(df_train, dataset_rootdir='datasets/IIIT5K-Word_V3.0/IIIT5K', max_length=max_length)
+    val_dataset = DatasetIIIT5K(df_test, dataset_rootdir='datasets/IIIT5K-Word_V3.0/IIIT5K', max_length=max_length)
+    train_loader = DataLoader(train_dataset, shuffle=True, batch_size=batch_size)
+    val_loader = DataLoader(val_dataset, shuffle=False, batch_size=batch_size)
+
+    return train_loader, val_loader
+
+
+def main(
+    dataset_rootdir='datasets/IIIT5K-Word_V3.0/IIIT5K'
+):
     batch_size = 12
     lr = 1e-4
     epochs = 100
     device = 'cuda'# if torch.cuda.is_available() else 'cpu'
-    max_length = 10
+    max_length = 22
 
     vit = vit_b_16(weights='IMAGENET1K_V1')
     model = VitEncoder(vit, max_length)
@@ -44,16 +67,12 @@ def main(dataset_rootdir='datasets/dataset7'):
     # model.load_state_dict(pt)
     model.cuda()
 
-    df_train, df_test = load_df(dataset_rootdir=dataset_rootdir, nrows=None)
-    train_dataset = MyDataset(dataset_rootdir, df_train, max_length)
-    val_dataset = MyDataset(dataset_rootdir, df_test, max_length)
-    train_loader = DataLoader(train_dataset, shuffle=True, batch_size=batch_size)
-    val_loader = DataLoader(val_dataset, shuffle=False, batch_size=batch_size)
+    train_loader, val_loader = load_IIIT5K_dataset(dataset_rootdir, max_length=max_length, batch_size=batch_size)
     
     optimizer = Adam(model.parameters(), lr=lr)
     criterion = nn.CrossEntropyLoss()
 
-    T_max = math.ceil(len(train_dataset) / batch_size)
+    T_max = math.ceil(len(train_loader.dataset) / batch_size)
 
     torch_lr_scheduler = CosineAnnealingLR(optimizer, T_max=T_max, eta_min=0.00001)
     lr_scheduler = LRScheduler(torch_lr_scheduler)    
@@ -90,8 +109,6 @@ def main(dataset_rootdir='datasets/dataset7'):
 
         y_pred = y_pred.view(-1, y_pred.size(-1))
         y = y.contiguous().view(-1)
-
-        # loss = criterion(y_pred, y)
 
         return y_pred, y
 

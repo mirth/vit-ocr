@@ -52,22 +52,24 @@ def load_IIIT5K_dataset(dataset_rootdir, *, max_length, batch_size):
 
 
 def main(
-    dataset_rootdir='datasets/IIIT5K-Word_V3.0/IIIT5K'
+    # dataset_rootdir='datasets/IIIT5K-Word_V3.0/IIIT5K'
+    dataset_rootdir='datasets/dataset8'
 ):
-    batch_size = 12
+    batch_size = 26
     lr = 1e-4
     epochs = 100
-    device = 'cuda'# if torch.cuda.is_available() else 'cpu'
+    device = 'cuda'
     max_length = 22
 
     vit = vit_b_16(weights='IMAGENET1K_V1')
     model = VitEncoder(vit, max_length)
-
+    print(model)
     # pt = torch.load('archive/model_9_dataset7_acc_0.9.pt')
     # model.load_state_dict(pt)
     model.cuda()
 
-    train_loader, val_loader = load_IIIT5K_dataset(dataset_rootdir, max_length=max_length, batch_size=batch_size)
+    train_loader, val_loader = load_mydataset(dataset_rootdir, max_length=max_length, batch_size=batch_size)
+    # train_loader, val_loader = load_IIIT5K_dataset(dataset_rootdir, max_length=max_length, batch_size=batch_size)
     
     optimizer = Adam(model.parameters(), lr=lr)
     criterion = nn.CrossEntropyLoss()

@@ -3,13 +3,9 @@ from torch import nn
 from einops import rearrange
 from attn import CrossAttention
 
-from tokenizer import chars
+from tokenizer import id_by_char
 
-VOCAB_SIZE = len(chars)
-# VOCAB_SIZE = 50257 + 1
-# def count_parameters(model):
-#     for name, p in model.named_parameters():
-#         print(name, p.numel())
+VOCAB_SIZE = len(id_by_char)
 
 class VitEncoder(nn.Module):
     def __init__(self, vit, max_length):
@@ -25,7 +21,6 @@ class VitEncoder(nn.Module):
             num_heads=768 // 128,
         )
         self.latents = nn.Parameter(torch.randn(max_length, VOCAB_SIZE))
-        self.pos_emb = nn.Embedding(197, 768)
 
     def forward(self, x):
         n, c, h, w = x.shape
